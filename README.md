@@ -27,7 +27,7 @@ You need the Kortix CLI and a Slack workspace you can install an app into.
 curl -fsSL https://kortix.com/install | bash
 kortix init claude-tag-kit            # or clone this repo and run the next line in it
 kortix validate                       # schema check; exits 1 on an error
-./scripts/check-grants.sh             # this repo's own guard against blanket grants
+bash scripts/check-grants.sh             # this repo's own guard against blanket grants
 kortix ship                           # push the manifest and start the project
 kortix channels connect               # Slack: open the link, pick the workspace, allow
 ```
@@ -59,7 +59,7 @@ Three things follow from that block, and they are the reason to run it this way:
 2. **Every write can be held.** `policy.default_mode: risk` makes every unmatched connector call need approval, and a `policies` rule can require approval or block one named tool. A held call posts a card in the Slack thread with the parameters the connector will receive.
 3. **The change history is git.** A session pushes its own branch; work reaches the default branch through a change request a person merges. To see why the agent had GitHub write access in March, read the commit.
 
-`./scripts/check-grants.sh` is a preflight, not a policy: it fails on `all` in a grant, a missing `policy` block, and the four permissions that let an agent merge its own work or delete a project. Run it in CI on the pull request that edits `kortix.yaml`.
+`bash scripts/check-grants.sh` is a preflight, not a policy: it fails on `all` in a grant, a missing `policy` block, and the four permissions that let an agent merge its own work or delete a project. Run it in CI on the pull request that edits `kortix.yaml`.
 
 ## A worked example: the incident channel
 
@@ -67,7 +67,7 @@ Three things follow from that block, and they are the reason to run it this way:
 
 ```bash
 cp examples/on-call/kortix.yaml kortix.yaml   # read the diff before you ship it
-kortix validate && ./scripts/check-grants.sh && kortix ship
+kortix validate && bash scripts/check-grants.sh && kortix ship
 ```
 
 ## Reading list
