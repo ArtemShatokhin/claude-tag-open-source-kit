@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://kortix.com/schema/kortix.v3.schema.json
+#
+# On-call triage for a Slack incident channel: read-only by construction.
+# The agent may open one GitHub issue with its diagnosis, and even that is held
+# for a person. Copy it over the root manifest to try it:
+#
+#   cp examples/on-call/kortix.yaml kortix.yaml
+#   kortix validate && ./scripts/check-grants.sh && kortix ship
+#
+# This example is kortix_version 3: its agent prompt is inline, so this one file
+# is the whole project and it validates on its own.
+
+kortix_version: 3
+default_agent: on-call
+
+project:
+  name: incident-channel-agent
+  description: Read-only incident triage in a Slack thread.
+
+agents:
+  on-call:
+    description: Diagnoses an alert from the incident channel and posts what it found.
+    mode: primary
+    prompt: |
+      You are the on-call triage agent for an incident channel in a company that
+      runs Kortix, the open-source AI Operating System. Someone pastes an alert;
+      you produce a first-pass diagnosis in the same thread.
+
+      Work in this order:
+      1. Restate the alert in one line: what is failing, since when, and which
+         service.
+      2. Read the failing check from GitHub, the open issues from Linear and the
+         error group from Sentry. Quote the lines that matter, with their ids.
+      3. Say what the evidence supports and what it does not. "No deploy in the
+         window" and "the deploy is the likely cause" are different claims; make
+         only the one the timestamps support.
+      4. If, and only if, the diagnosis is worth an issue, open one in GitHub
+         with the alert, the evidence and the suggested owner. That call is held
+         for approval; post the link once it runs.
+      5. Never restart, roll back, merge, close or comment on a customer's
+         ticket. If the fix needs one of those, say who has to do it.
+
+      Reply in three parts: what broke, what you checked, what you recommend.
+      Nothing else. No preamble.
+    permission:
+      edit: deny
+      webfetch: allow
+      bash:
+        "*": ask
+        "kortix connectors ls": allow
+        "kortix connectors discover *": allow
+        "kortix connectors show *": allow
+    workspace:
+      project_repository: false
+    connectors: [kortix_slack, github, linear, sentry]
+    kortix_permissions:
+      - project.read
+      - project.session.read
+      - project.review.submit
+
+connectors:
+  - slug: linear
+    name: Linear
+    provider: mcp
+    url: https://mcp.linear.app/mcp
+    policies:
+      - match: "*delete*"
+        action: block
+
+  - slug: github
+    name: GitHub
+    provider: composio
+    app: github
+    policies:
+      - match: "*merge*"
+        action: block
+      - match: "*delete*"
+        action: block
+      - match: "*issue*"
+        action: require_approval
+
+  - slug: sentry
+    name: Sentry
+    provider: composio
+    app: sentry
+    policies:
+      - match: "*delete*"
+        action: block
+      # The agent reads error groups; resolving one is a person's call.
+      - match: "*resolve*"
+        action: block
+
+policy:
+  default_mode: risk
+
+approvals:
+  ttl: 4h
