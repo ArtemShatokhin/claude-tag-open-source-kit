@@ -91,7 +91,7 @@ app's Review page). Approve or deny there. The details worth knowing:
 ```bash
 kortix validate                  # schema, missing files, undeclared secrets and connectors
 kortix validate --scopes         # every grantable project permission
-./scripts/check-grants.sh        # this repo's guard: blanket grants, no policy, dangerous permissions
+bash scripts/check-grants.sh        # this repo's guard: blanket grants, no policy, dangerous permissions
 ```
 
 `kortix validate` exits 0 clean, 1 on an error, 2 when the file is missing. The
