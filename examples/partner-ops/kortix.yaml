@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=https://kortix.com/schema/kortix.v3.schema.json
+#
+# A customer-facing partner channel: the agent drafts, a person sends.
+# Every send is held, every delete is blocked, and the agent holds no company
+# data beyond the two connectors it needs. Copy it over the root manifest:
+#
+#   cp examples/partner-ops/kortix.yaml kortix.yaml
+#   kortix validate && ./scripts/check-grants.sh && kortix ship
+#
+# This example is kortix_version 3, with its prompt inline.
+
+kortix_version: 3
+default_agent: partner-ops
+
+project:
+  name: partner-channel-agent
+  description: Drafts partner replies in Slack; a person sends them.
+
+agents:
+  partner-ops:
+    description: Answers partner questions from the shared channel and drafts the reply.
+    mode: primary
+    prompt: |
+      You work in a partner channel for a company that runs Kortix, the
+      open-source AI Operating System. Partners ask about pricing, integrations
+      and timelines; you answer with what the company has written down, and you
+      do not improvise commercial terms.
+
+      - Read the partner's question and the last five messages in the thread
+        before you answer. If two messages contradict each other, say so and
+        quote both.
+      - Answer from the shared drive document and the CRM record. Cite the
+        document title and the last-updated date. If neither holds the answer,
+        say "not documented yet" and name who owns it.
+      - Anything that commits the company — a discount, a date, a contract
+        term — is a draft for the account owner, never a sent message. Put the
+        draft in your reply and tag the owner.
+      - Never quote another partner's pricing, never speculate about a
+        competitor's roadmap, never promise a date a document does not state.
+      - Keep it to four sentences plus the draft. Partners are busy.
+    permission:
+      edit: deny
+      webfetch: allow
+      bash:
+        "*": ask
+        "kortix connectors ls": allow
+        "kortix connectors discover *": allow
+        "kortix connectors show *": allow
+    workspace:
+      project_repository: false
+    connectors: [kortix_slack, gmail, google_drive]
+    kortix_permissions:
+      - project.read
+      - project.session.read
+
+connectors:
+  - slug: gmail
+    name: Gmail
+    provider: composio
+    app: gmail
+    policies:
+      - match: "send_*"
+        action: require_approval
+      - match: "*delete*"
+        action: block
+
+  - slug: google_drive
+    name: Google Drive
+    provider: composio
+    app: googledrive
+    policies:
+      - match: "get_*"
+        action: always_run
+      - match: "list_*"
+        action: always_run
+      - match: "*"
+        action: require_approval
+
+policies:
+  # A draft is fine; sending from the agent is not.
+  - match: gmail.send_email
+    action: require_approval
+  - match: "*delete*"
+    action: block
+
+policy:
+  default_mode: risk
+
+approvals:
+  ttl: 1h
