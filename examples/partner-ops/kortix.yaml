@@ -5,7 +5,7 @@
 # data beyond the two connectors it needs. Copy it over the root manifest:
 #
 #   cp examples/partner-ops/kortix.yaml kortix.yaml
-#   kortix validate && ./scripts/check-grants.sh && kortix ship
+#   kortix validate && bash scripts/check-grants.sh && kortix ship
 #
 # This example is kortix_version 3, with its prompt inline.
 
