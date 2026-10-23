@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://kortix.com/schema/kortix.v2.schema.json
+#
+# A Slack agent on the open-source Kortix AI Operating System.
+# The grants below are the whole security review: deny-by-default, and every
+# write is either held for approval or blocked.
+#
+#   kortix validate          # schema + file checks
+#   ./scripts/check-grants.sh
+#   kortix ship
+
+kortix_version: 2
+default_agent: slack-ops
+
+project:
+  name: claude-tag-kit
+  description: A Slack agent whose grants and review live in this repo.
+
+agents:
+  slack-ops:
+    file: agents/slack-ops.md
+    # A grant set is deny-by-default: no key, no access.
+    connectors: [kortix_slack, linear, github]
+    secrets: []
+    skills: [grant-review, kortix-slack]
+    # The agent acts as its own service account, never as the person who
+    # tagged it. These three are all it needs to read a session and file a
+    # review; it cannot merge, delete or manage members.
+    kortix_permissions:
+      - project.read
+      - project.session.read
+      - project.review.submit
+
+connectors:
+  # Linear's own MCP server: no OAuth app to create, sign-in is one click.
+  - slug: linear
+    name: Linear
+    provider: mcp
+    url: https://mcp.linear.app/mcp
+    policies:
+      - match: "*delete*"
+        action: block
+      - match: "*create*"
+        action: require_approval
+
+  # GitHub through the managed catalog (its remote MCP server needs a pasted
+  # token, so it installs as the managed app).
+  - slug: github
+    name: GitHub
+    provider: composio
+    app: github
+    policies:
+      - match: "*merge*"
+        action: block
+      - match: "*delete*"
+        action: block
+      # Tool names differ per provider: `kortix connectors show github.<action>`
+      # prints the schema of one, and the same pattern in a project-wide rule
+      # is written `github.<action>`.
+      - match: "*issue*"
+        action: require_approval
+
+# A call no rule matches: reads run, writes and destructive calls are held.
+policy:
+  default_mode: risk
+
+# How long a held call waits for a person. Kortix clamps 5m to 30d; the
+# default without this key is 24h.
+approvals:
+  ttl: 4h
+
+triggers:
+  - slug: morning-digest
+    name: Morning digest
+    type: cron
+    agent: slack-ops
+    cron: "0 0 9 * * 1-5"
+    timezone: Europe/Berlin
+    prompt: |
+      Post a short digest of the Linear issues that moved since yesterday and
+      the GitHub pull requests waiting on review. Post it in the ops channel
+      C0123ABCD, in one message, newest first. Read-only: open nothing, change
+      nothing. If Linear returns no updated issues, say so in one line instead
+      of padding the digest.
