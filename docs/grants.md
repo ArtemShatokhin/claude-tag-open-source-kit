@@ -40,6 +40,10 @@ project, read sessions, submit a review. It cannot merge, delete, manage members
 or change settings — not because the prompt says so, but because the list stops
 there.
 
+In Claude Tag an owner provisions the same reach in Anthropic's console;
+[what Claude Tag gives and what it does not](https://claudetagalternative.com/claude-tag-slack)
+covers those decisions.
+
 ## Connector policies, in the order Kortix checks them
 
 For every connector call, the first match wins:
