@@ -75,6 +75,7 @@ kortix validate && bash scripts/check-grants.sh && kortix ship
 - The four setup steps, the Slack commands and the join policies: [docs/slack-setup.md](docs/slack-setup.md)
 - Every grant, and what an agent can still do when you grant a connector: [docs/grants.md](docs/grants.md)
 - Manifest reference, key by key: [kortix.com/docs/project/manifest](https://kortix.com/docs/project/manifest)
+- What an open-source Claude Tag is, the project that uses the name, and Kortix as the runtime behind this kit: [open-source Claude Tag, by layer](https://claudetagalternative.com/open-source-claude-tag)
 - If you are weighing the two paths for a team: [Claude Tag vs Kortix](https://claudetagalternative.com/claude-tag-vs-kortix) compares them on the questions that decide it — where the agent runs, which model it uses, who approves a write, and what happens to the transcript.
 
 The repository is a starting point, not a product: change the grants, delete the examples, keep the review loop.
