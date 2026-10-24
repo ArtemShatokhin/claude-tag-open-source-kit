@@ -47,6 +47,10 @@ person links within those 10 minutes.
 - A linked member without access to the project gets a request-access card that
   account admins see in Kortix.
 
+A workspace that ran the Claude in Slack app re-binds the channels it sat in;
+[moving a team off the old Claude in Slack app](https://claudetagalternative.com/claude-in-slack)
+covers what changed and what an admin re-checks.
+
 ## 4. Tag it with a task
 
 Mention the bot in the channel with the task. In a channel only a mention
